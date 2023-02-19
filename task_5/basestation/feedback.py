@@ -1,8 +1,12 @@
+import datetime
 import numpy as np
 import cv2
 import cv2.aruco as aruco
 import math
-from threading import Thread
+import threading
+import traceback
+import controller
+from time import sleep
 
 ARENABORDERIDS = [2, 4, 8, 10]
 ROBOT = 15
@@ -19,19 +23,23 @@ dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
 parameters = aruco.DetectorParameters()
 detector = aruco.ArucoDetector(dictionary, parameters)
 
-
+pi = 3.1415
+(cx, cy, theta) =  (-1, -1, 0)
+cap = None
 
 def get_centroid(corn_pts):
+    global cx, cy
     corn_pts = corn_pts[0]
     M = cv2.moments(corn_pts)
     # might convert to int??
     cent_x = ((M["m10"] / M["m00"]))
     cent_y = ((M["m01"] / M["m00"]))
-    return (cent_x, cent_y)
-
+    (cx, cy) = (int(cent_x), int(cent_y))
 
 def get_theta(corn_pts):
-    cX, cY = get_centroid(corn_pts)
+    global cx, cy, theta
+    get_centroid(corn_pts)
+    cX, cY = cx, cy
     corn_ptsi = np.squeeze(corn_pts[0])
     bX = corn_ptsi[1][0]
     bY = corn_ptsi[1][1]
@@ -41,49 +49,51 @@ def get_theta(corn_pts):
     ret = (ans_1 + math.pi/4) % (2*math.pi)
     if ret > math.pi:
         ret = -(2*math.pi - ret)
-    return ret
+    theta = ret
 
 
 def callback(current_frame):
-
     (corners, ids, _) = detector.detectMarkers(current_frame)
     # print(len(corners))
     # print(np.squeeze(corners[0])[0][0])
     try:
-        arucos=()
-        #arucos = dict(zip(ids, corners))
-        #for (i, id) in enumerate(ARENABORDERIDS):
-         #   corners = arucos[id]
-          #  arenacornpts[i] = get_centroid(corners)
-            #arenamask = np.zeros(RES, np.unit8)
-            #arenamask = cv2.drawContours(arenamask, [[arenacornpts]], -1, (255, 255, 255), cv2.LINE_AA)
         corners = np.array(corners).reshape((-1, 2))
-        #rect = cv2.boundingRect(corners)
-        mask = np.zeros(current_frame.shape[:2])
-        for i in corners:
-            mask[i
-                 ] 
-        #cropped = current_frame[rect[1]: rect[1] + rect[3], rect[0]: rect[0] + rect[2]]
-        cv2.drawContours(current_frame, hull, 0, (255, 0, 0), 8)
-        #wbg = np.ones_like(img, np.uint8)*255
-        #print(wbg.shape[:2])
-        #wbg = cv2.bitwise_not(wbg, mask=arenamask)
+        rect = cv2.boundingRect(corners)
+        cropped = current_frame[rect[1]: rect[1] + rect[3], rect[0]: rect[0] + rect[2]]
+        cropped = cv2.resize(cropped, (500, 500))
+        (corners, ids, _) = detector.detectMarkers(cropped)
+        
+        ids = [i[0] for i in ids]
+        arucos=dict(zip(ids, corners))
+        if 15 in ids:
+            #print(arucos)
+            #print(ids, arucos[15][0])
+            get_theta(arucos[15])
+            get_centroid(arucos[15])
+            
+        cv2.putText(cropped, "{} {} {}".format(int(cx), int(cy), theta),\
+                    (10,250), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2, cv2.LINE_AA)
 
-        #cropped = wbg + cropped
-        cv2.imshow("Aruco markers", current_frame)
-
-        # Exit if the 'q' key is pressed
+        if cx!=-1 and cy!=-1:
+            cv2.arrowedLine(cropped, (cx, cy),
+                            (int(cx+controller.currvel[0]/7), int(cy+controller.currvel[1]/7)),
+                            (0, 0, 255), 4)
+        cv2.imshow("Aruco markers", cropped)
+        #Exit if the 'q' key is pressed
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
             return
-        
-    except Exception as e:
-        print(e)
-        arucos = ()
-    print(arucos)
+    except KeyboardInterrupt as e:
+        controller.STOP = True
+        sleep(1)
 
-def main():
-    # Open the video capture
+    except Exception as e:
+        print(traceback.format_exc())
+        arucos = ()
+    #print(arucos)
+
+def setcamera():
+    global cap
     cap = cv2.VideoCapture("/dev/video2")
     codec = 0x47504A4D  # MJPG
     cap.set(cv2.CAP_PROP_FPS, 30.0)
@@ -91,29 +101,41 @@ def main():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1024)
 
+def get_coods():
+    # Open the video capture
+    gotot = threading.Thread(target=controller.goto, args=())
+    gotot.start()
     while True:
+        try:
         # Capture the frame from the video feed
-        ret, frame = cap.read()
-        if not ret:
-            break
-        h, w = frame.shape[:2]
-        print("h, w, {}, {}", h, w)
-        newcameramtx, roi = cv2.getOptimalNewCameraMatrix(camera_matrix, dist_coeffs, (w,h), 1, (w,h))
-        frame = cv2.undistort(frame, camera_matrix, dist_coeffs, None, newcameramtx)
+            ret, frame = cap.read()
+            if not ret:
+                break
+            h, w = frame.shape[:2]
+            #print("h, w, {}, {}", h, w)
+            newcameramtx, roi = cv2.getOptimalNewCameraMatrix(camera_matrix, dist_coeffs, (w,h), 1, (w,h))
+            frame = cv2.undistort(frame, camera_matrix, dist_coeffs, None, newcameramtx)
 
-        callback(frame)
-                
-        '''        cv2.imshow("Aruco markers", new_frame)
+            callback(frame)
 
-        # Exit if the 'q' key is pressed
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break '''
-
+            controller.geterr(cx, cy, theta)
+            #print(controller.currx, controller.curry)
+            print("ERROR", controller.errx, controller.erry)
+            #print(controller.currvel)
+        except KeyboardInterrupt as e:
+            controller.STOP = True
+            sleep(1)
+            exit()
+        except Exception as e:
+            print(traceback.format_exc())
+        
     # Release the video capture
     cap.release()
     cv2.destroyAllWindows()
 
-    
-
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    setcamera()
+    #addr = controller.connect()
+    controller.setgoals([(250, 250, 0)])
+    get_coods()
+    print("Connected at addr - {}".format(addr))
