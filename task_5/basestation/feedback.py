@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import cv2.aruco as aruco
 import math
+from math import pi
 import threading
 import traceback
 import controller
@@ -23,23 +24,28 @@ dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
 parameters = aruco.DetectorParameters()
 detector = aruco.ArucoDetector(dictionary, parameters)
 
-pi = 3.1415
-(cx, cy, theta) =  (-1, -1, 0)
+(ocx, ocy) = (0, 0)#coods according to opencv
+(cx, cy, theta) =  (-1, -1, 0)#coords according to problem
 cap = None
 
+
+def addtheta(a, b): 
+    return (-a-b+pi)%(2*pi) - pi
+
 def get_centroid(corn_pts):
-    global cx, cy
+    global cx, cy, ocx, ocy
     corn_pts = corn_pts[0]
     M = cv2.moments(corn_pts)
     # might convert to int??
     cent_x = ((M["m10"] / M["m00"]))
     cent_y = ((M["m01"] / M["m00"]))
-    (cx, cy) = (int(cent_x), int(cent_y))
+    ocx, ocy = (int(cent_x), int(cent_y))
+    (cx, cy) = (int(cent_x), 500-int(cent_y))#flipping y axis
 
 def get_theta(corn_pts):
-    global cx, cy, theta
+    global ocx, ocy, theta
     get_centroid(corn_pts)
-    cX, cY = cx, cy
+    cX, cY = ocx, ocy
     corn_ptsi = np.squeeze(corn_pts[0])
     bX = corn_ptsi[1][0]
     bY = corn_ptsi[1][1]
@@ -61,6 +67,7 @@ def callback(current_frame):
         rect = cv2.boundingRect(corners)
         cropped = current_frame[rect[1]: rect[1] + rect[3], rect[0]: rect[0] + rect[2]]
         cropped = cv2.resize(cropped, (500, 500))
+        cropped = cv2.flip(cropped, -1)
         (corners, ids, _) = detector.detectMarkers(cropped)
         
         ids = [i[0] for i in ids]
@@ -70,14 +77,11 @@ def callback(current_frame):
             #print(ids, arucos[15][0])
             get_theta(arucos[15])
             get_centroid(arucos[15])
-            
-        cv2.putText(cropped, "{} {} {}".format(int(cx), int(cy), theta),\
+        
+        controller.setcoods(cx, cy, theta)
+        cv2.putText(cropped, "{} {} {}({})".format(int(cx), int(cy), round(theta, 5), round(theta*180/pi)),\
                     (10,250), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2, cv2.LINE_AA)
 
-        if cx!=-1 and cy!=-1:
-            cv2.arrowedLine(cropped, (cx, cy),
-                            (int(cx+controller.currvel[0]/7), int(cy+controller.currvel[1]/7)),
-                            (0, 0, 255), 4)
         cv2.imshow("Aruco markers", cropped)
         #Exit if the 'q' key is pressed
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -85,6 +89,7 @@ def callback(current_frame):
             return
     except KeyboardInterrupt as e:
         controller.STOP = True
+        controller.STOPREASON = "keyboard interrupt"
         sleep(1)
 
     except Exception as e:
@@ -95,9 +100,10 @@ def callback(current_frame):
 def setcamera():
     global cap
     cap = cv2.VideoCapture("/dev/video2")
+
     codec = 0x47504A4D  # MJPG
-    cap.set(cv2.CAP_PROP_FPS, 30.0)
     cap.set(cv2.CAP_PROP_FOURCC, codec)
+    cap.set(cv2.CAP_PROP_FPS, 60.0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1024)
 
@@ -120,10 +126,11 @@ def get_coods():
 
             controller.geterr(cx, cy, theta)
             #print(controller.currx, controller.curry)
-            print("ERROR", controller.errx, controller.erry)
+            #print("ERROR", controller.errx, controller.erry)
             #print(controller.currvel)
         except KeyboardInterrupt as e:
             controller.STOP = True
+            controller.STOPREASON = "keyboard interrupt"
             sleep(1)
             exit()
         except Exception as e:
@@ -135,7 +142,7 @@ def get_coods():
 
 if __name__ == "__main__":
     setcamera()
-    #addr = controller.connect()
-    controller.setgoals([(250, 250, 0)])
+    addr = controller.connect()
+    controller.setgoals([(250, 250, 0), (350,300, pi/4), (150,300, 3*pi/4), (150, 150, - 3 * pi / 4), (350,150, -pi/4)])
     get_coods()
-    print("Connected at addr - {}".format(addr))
+    #print("Connected at addr - {}".format(addr))

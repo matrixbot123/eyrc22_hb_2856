@@ -3,11 +3,11 @@ import threading, datetime
 import feedback
 import socket
 from time import sleep
+from math import pi
 
 #constants
-pi = 3.1415
-VCONSTX = 200
-VCONSTY = 200
+VCONSTX = -100
+VCONSTY = 100
 VCONSTZ = 100
 
 #--non constants
@@ -34,15 +34,21 @@ def sign(a, x):
 
 #-------------------
 
+def norm(a, b):
+    m = max(abs(a), abs(b))
+    if m == 0:
+        return
+    return (a/m, b/m)
+
 def setgoals(goals):
     global nextgoals, goalx, goaly, goalt
-    goalx, goaly, goalt = goals.pop()
+    goalx, goaly, goalt = goals.pop(0)
     nextgoals = goals
 
 def broadcastvel(conn):
     if STOP:
         data = "0 0 0\n"
-        print("STOPPING for "+STOPREASON)
+        #print("STOPPING for "+STOPREASON)
         conn.sendall(str.encode(data))
         data = conn.recv(1024).decode()
         return
@@ -52,7 +58,12 @@ def broadcastvel(conn):
     ret = conn.recv(1024).decode()
     if int(ret) == 1:
         pass
-        print("Successfully transmitted {} at {} ".format(data, str(datetime.datetime.now())))
+        #print("Successfully transmitted {} at {} ".format(data, str(datetime.datetime.now())))
+
+
+def setcoods(cx, cy, t):
+    global currx, curry, theta
+    currx, curry, theta = cx, cy, t
 
 def geterr(currx, curry, theta):
     global errx, erry, errt
@@ -60,7 +71,7 @@ def geterr(currx, curry, theta):
 
 def pause(t, reason):#pauses robot for t s
     global conn, STOP, STOPREASON
-    print(reason)
+    #print(reason)
     SROPREASON=reason
     STOP=True
     broadcastvel(conn)
@@ -68,25 +79,46 @@ def pause(t, reason):#pauses robot for t s
     STOP=False
 
 def goto():
-    global goalx, goaly, errx, erry, currvel, STOP
+    global goalx, goaly, goalt, errx, erry, currvel, STOP, STOPREASON
     sleep(2)
     
     while True:
         ex, ey, et = 0, 0, 0
         velx, vely, velz = (0, 0, 0)
         if abs(errx)<aerrorx and abs(erry)<aerrory:#if reached linear goal
-            print("Stopped linearly")
+            #print("Stopped linearly")
             #pause(1, "Stopped Linearly")
             if abs(errt)<aerrort:
-                print("HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE", errx, erry, aerrorx, aerrory)
-                pause(3, "One goal done")
+                #print("HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE", errx, erry, aerrorx, aerrory)
+                
                 if len(nextgoals)==0:
+                    STOP = True
+                    STOPREASON = "DONE"
+                    broadcastvel(conn)
                     print("Done.")
                     exit()
-                (goalx, goaly, goalt) = nextgoals.pop()
+                else:
+                    (goalx, goaly, goalt) = nextgoals.pop(0)
+                pause(3, "One goal done")
                 continue
             else:
-                currvel=(0, 0, VCONSTZ)
+                velz = 0
+                if (theta>0 and goalt>0) or (theta<0 and goalt<0):
+                    if errt>0:
+                        velz = VCONSTZ
+                    else:
+                        velz = -VCONSTZ
+                elif theta<0 and goalt>0:
+                    if errt<pi:
+                        velz = VCONSTZ
+                    else:
+                        velx = -VCONSTZ
+                else:
+                    if errt>-pi:
+                        velz = -VCONSTZ
+                    else:
+                        velz = VCONSTZ
+                currvel = (0, 0, velz)
                 broadcastvel(conn)
         else:
             if errx==0:
@@ -97,13 +129,15 @@ def goto():
                     ex = sign(math.cos(aa), errx)
                     ey = sign(math.sin(aa), erry)
 
-
-            velx = VCONSTX * (ex * math.cos(-theta) - ey * math.sin(-theta))
-            vely = VCONSTY * (ex * math.sin(-theta) + ey * math.cos(-theta))
+            (ex, ey) = norm(errx, erry)
+            velx = VCONSTX * (ex * math.cos(theta) - ey * math.sin(theta))
+            vely = VCONSTY * (ex * math.sin(theta) + ey * math.cos(theta))
+            #print("ERR ____", errx, erry, theta)
+            #print("VELOCITY ___ ", velx, vely)
             #print("Publishing vel {}, {}".format(velx, vely))
 
             currvel = (velx, vely, 0)
-            print("currvel", currvel)
+            #print("currvel", currvel)
         broadcastvel(conn)
 
 def connect():
