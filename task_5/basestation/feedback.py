@@ -66,7 +66,7 @@ def callback(current_frame):
         corners = np.array(corners).reshape((-1, 2))
         rect = cv2.boundingRect(corners)
         cropped = current_frame[rect[1]: rect[1] + rect[3], rect[0]: rect[0] + rect[2]]
-        cropped = cv2.resize(cropped, (500, 500))
+        #cropped = cv2.resize(cropped, (500, 500))
         cropped = cv2.flip(cropped, -1)
         (corners, ids, _) = detector.detectMarkers(cropped)
         
@@ -77,12 +77,15 @@ def callback(current_frame):
             #print(ids, arucos[15][0])
             get_theta(arucos[15])
             get_centroid(arucos[15])
-        
+        print(corners)
         controller.setcoods(cx, cy, theta)
         cv2.putText(cropped, "{} {} {}({})".format(int(cx), int(cy), round(theta, 5), round(theta*180/pi)),\
                     (10,250), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2, cv2.LINE_AA)
+        #cv2.putText(cropped, "{} {} {} {}".format(corners[0][0], corners[0][1], corners[1][0], corners[1][1]),\
+         #           (10,150), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2, cv2.LINE_AA)
 
-        cv2.imshow("Aruco markers", cropped)
+
+        cv2.imshow("1", cropped)
         #Exit if the 'q' key is pressed
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cv2.destroyAllWindows()
@@ -99,7 +102,7 @@ def callback(current_frame):
 
 def setcamera():
     global cap
-    cap = cv2.VideoCapture("/dev/video2")
+    cap = cv2.VideoCapture(0)
 
     codec = 0x47504A4D  # MJPG
     cap.set(cv2.CAP_PROP_FOURCC, codec)
@@ -116,6 +119,7 @@ def get_coods():
         # Capture the frame from the video feed
             ret, frame = cap.read()
             if not ret:
+                print("prob with cam")
                 break
             h, w = frame.shape[:2]
             #print("h, w, {}, {}", h, w)
@@ -142,7 +146,7 @@ def get_coods():
 
 if __name__ == "__main__":
     setcamera()
-    addr = controller.connect()
+    #addr = controller.connect()
     controller.setgoals([(250, 250, 0), (350,300, pi/4), (150,300, 3*pi/4), (150, 150, - 3 * pi / 4), (350,150, -pi/4)])
     get_coods()
     #print("Connected at addr - {}".format(addr))

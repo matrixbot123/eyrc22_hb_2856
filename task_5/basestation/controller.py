@@ -6,9 +6,9 @@ from time import sleep
 from math import pi
 
 #constants
-VCONSTX = -100
-VCONSTY = 100
-VCONSTZ = 100
+VCONSTX = 100
+VCONSTY = -100
+VCONSTZ = -100
 
 #--non constants
 STOP = False#emergency stop flag
@@ -43,6 +43,7 @@ def norm(a, b):
 def setgoals(goals):
     global nextgoals, goalx, goaly, goalt
     goalx, goaly, goalt = goals.pop(0)
+    print("Going to Origin Pose.")
     nextgoals = goals
 
 def broadcastvel(conn):
@@ -99,25 +100,17 @@ def goto():
                     exit()
                 else:
                     (goalx, goaly, goalt) = nextgoals.pop(0)
+                print("GOAL REACHED")
                 pause(3, "One goal done")
                 continue
             else:
                 velz = 0
-                if (theta>0 and goalt>0) or (theta<0 and goalt<0):
-                    if errt>0:
-                        velz = VCONSTZ
-                    else:
-                        velz = -VCONSTZ
-                elif theta<0 and goalt>0:
-                    if errt<pi:
-                        velz = VCONSTZ
-                    else:
-                        velx = -VCONSTZ
+                thetatmp = theta+pi
+                goalttmp = goalt+pi
+                if abs(goalttmp - thetatmp)<pi:
+                    velz = sign(VCONSTZ, goalttmp-thetatmp)
                 else:
-                    if errt>-pi:
-                        velz = -VCONSTZ
-                    else:
-                        velz = VCONSTZ
+                    velz = -sign(VCONSTZ, goalttmp-thetatmp)
                 currvel = (0, 0, velz)
                 broadcastvel(conn)
         else:
