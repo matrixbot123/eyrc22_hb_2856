@@ -25,22 +25,38 @@ parameters = aruco.DetectorParameters()
 detector = aruco.ArucoDetector(dictionary, parameters)
 
 (ocx, ocy) = (0, 0)#coods according to opencv
+(fakex,fakey) = (0, 0)
 (cx, cy, theta) =  (-1, -1, 0)#coords according to problem
 cap = None
+cw, ch = 1, 1
 
+scoods = [0, 0, 0, 0]#stabilized coordinates
+stol = 5#px stabillization tolerance
+sTol = 200#High tolerance point
 
+def stabilizebounds(r):
+    global scoods
+    for i in range(4):
+        if abs(r[i]-scoods[i])>=sTol:
+            scoods[i] = r[i]
+        elif abs(r[i]-scoods[i])>=stol:
+            r[i] = scoods[i]
+            scoods[i] = r[i]-stol
+
+    
 def addtheta(a, b): 
     return (-a-b+pi)%(2*pi) - pi
 
 def get_centroid(corn_pts):
-    global cx, cy, ocx, ocy
+    global cx, cy, ocx, ocy, fakex, fakey
     corn_pts = corn_pts[0]
     M = cv2.moments(corn_pts)
     # might convert to int??
     cent_x = ((M["m10"] / M["m00"]))
     cent_y = ((M["m01"] / M["m00"]))
     ocx, ocy = (int(cent_x), int(cent_y))
-    (cx, cy) = (int(cent_x), 500-int(cent_y))#flipping y axis
+    (cx, cy) = (int(cent_x), ch-int(cent_y))#flipping y axis
+    (fakex, fakey) = (cx/cw * 500, 500 - cy/ch * 500)
 
 def get_theta(corn_pts):
     global ocx, ocy, theta
@@ -51,6 +67,7 @@ def get_theta(corn_pts):
     bY = corn_ptsi[1][1]
     x_diff = bX - cX
     y_diff = bY - cY
+    #print("DIFF, ", x_diff, y_diff)
     ans_1 = math.atan2(y_diff, x_diff)
     ret = (ans_1 + math.pi/4) % (2*math.pi)
     if ret > math.pi:
@@ -59,30 +76,32 @@ def get_theta(corn_pts):
 
 
 def callback(current_frame):
+    global cw, ch
     (corners, ids, _) = detector.detectMarkers(current_frame)
-    # print(len(corners))
-    # print(np.squeeze(corners[0])[0][0])
+    
     try:
         corners = np.array(corners).reshape((-1, 2))
         rect = cv2.boundingRect(corners)
+        rect = list(rect)
+        #print(rect)
+        stabilizebounds(rect)
+        rect = scoods
+        #print(rect)
         cropped = current_frame[rect[1]: rect[1] + rect[3], rect[0]: rect[0] + rect[2]]
-        #cropped = cv2.resize(cropped, (500, 500))
+        cw, ch = rect[2], rect[3]
         cropped = cv2.flip(cropped, -1)
+
         (corners, ids, _) = detector.detectMarkers(cropped)
         
         ids = [i[0] for i in ids]
         arucos=dict(zip(ids, corners))
         if 15 in ids:
-            #print(arucos)
-            #print(ids, arucos[15][0])
-            get_theta(arucos[15])
             get_centroid(arucos[15])
-        print(corners)
+            get_theta(arucos[15])
+
         controller.setcoods(cx, cy, theta)
-        cv2.putText(cropped, "{} {} {}({})".format(int(cx), int(cy), round(theta, 5), round(theta*180/pi)),\
+        cv2.putText(cropped, "{} {} {}({})".format(int(fakex), int(fakey), round(theta, 5), round(theta*180/pi)),\
                     (10,250), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2, cv2.LINE_AA)
-        #cv2.putText(cropped, "{} {} {} {}".format(corners[0][0], corners[0][1], corners[1][0], corners[1][1]),\
-         #           (10,150), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2, cv2.LINE_AA)
 
 
         cv2.imshow("1", cropped)
@@ -110,6 +129,15 @@ def setcamera():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1024)
 
+def setgoals(a):
+    ngoals = []
+    for i in a:
+        a = int(i[0]/500.0 * cw)
+        b = int(i[1]/500.0 * ch)
+        ngoals.append((a, b, i[2]))
+    print(ngoals)
+    controller.setgoals(ngoals)
+
 def get_coods():
     # Open the video capture
     gotot = threading.Thread(target=controller.goto, args=())
@@ -128,6 +156,8 @@ def get_coods():
 
             callback(frame)
 
+            if not controller.aregoalsset():
+                setgoals([(250, 250, 0), (350,300, pi/4), (150,300, 3*pi/4), (150, 150, - 3 * pi / 4), (350,150, -pi/4)])
             controller.geterr(cx, cy, theta)
             #print(controller.currx, controller.curry)
             #print("ERROR", controller.errx, controller.erry)
@@ -146,7 +176,7 @@ def get_coods():
 
 if __name__ == "__main__":
     setcamera()
-    #addr = controller.connect()
-    controller.setgoals([(250, 250, 0), (350,300, pi/4), (150,300, 3*pi/4), (150, 150, - 3 * pi / 4), (350,150, -pi/4)])
+    addr = controller.connect()
     get_coods()
+
     #print("Connected at addr - {}".format(addr))

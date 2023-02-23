@@ -22,7 +22,7 @@ goalx, goaly, goalt = (0, 0, 0)
 nextgoals = []#stack of next goals
 conn=None
 aerrorx, aerrory, aerrort = 3, 3, 0.03#accepted error
-
+check = 0
 #-------------------
 #helper functions
 
@@ -45,6 +45,12 @@ def setgoals(goals):
     goalx, goaly, goalt = goals.pop(0)
     print("Going to Origin Pose.")
     nextgoals = goals
+
+def aregoalsset():
+    if len(nextgoals) == 0 and goalx==0 and goaly==0:
+        return False
+    else:
+        return True
 
 def broadcastvel(conn):
     if STOP:
@@ -69,6 +75,7 @@ def setcoods(cx, cy, t):
 def geterr(currx, curry, theta):
     global errx, erry, errt
     (errx, erry, errt) = goalx - currx, goaly - curry, goalt - theta
+    #print(errt)
 
 def pause(t, reason):#pauses robot for t s
     global conn, STOP, STOPREASON
@@ -80,7 +87,7 @@ def pause(t, reason):#pauses robot for t s
     STOP=False
 
 def goto():
-    global goalx, goaly, goalt, errx, erry, currvel, STOP, STOPREASON
+    global goalx, goaly, goalt, errx, erry, currvel, STOP, STOPREASON, check
     sleep(2)
     
     while True:
@@ -90,8 +97,7 @@ def goto():
             #print("Stopped linearly")
             #pause(1, "Stopped Linearly")
             if abs(errt)<aerrort:
-                #print("HEREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE", errx, erry, aerrorx, aerrory)
-                
+#                print(theta, errt)
                 if len(nextgoals)==0:
                     STOP = True
                     STOPREASON = "DONE"
