@@ -1,3 +1,4 @@
+import sys
 import datetime
 import numpy as np
 import cv2
@@ -82,10 +83,10 @@ def callback(current_frame):
     try:
         corners = np.array(corners).reshape((-1, 2))
         rect = cv2.boundingRect(corners)
-        rect = list(rect)
+        #rect = list(rect)
         #print(rect)
-        stabilizebounds(rect)
-        rect = scoods
+        #stabilizebounds(rect)
+        #rect = scoods
         #print(rect)
         cropped = current_frame[rect[1]: rect[1] + rect[3], rect[0]: rect[0] + rect[2]]
         cw, ch = rect[2], rect[3]
@@ -102,7 +103,6 @@ def callback(current_frame):
         controller.setcoods(cx, cy, theta)
         cv2.putText(cropped, "{} {} {}({})".format(int(fakex), int(fakey), round(theta, 5), round(theta*180/pi)),\
                     (10,250), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2, cv2.LINE_AA)
-
 
         cv2.imshow("1", cropped)
         #Exit if the 'q' key is pressed
@@ -121,7 +121,11 @@ def callback(current_frame):
 
 def setcamera():
     global cap
-    cap = cv2.VideoCapture(0)
+    print(sys.argv)
+    if len(sys.argv) >= 1:
+        cap = cv2.VideoCapture("/dev/video1")
+    else:
+        cap = cv2.VideoCapture(int(sys.argv[1]))
 
     codec = 0x47504A4D  # MJPG
     cap.set(cv2.CAP_PROP_FOURCC, codec)
@@ -176,7 +180,7 @@ def get_coods():
 
 if __name__ == "__main__":
     setcamera()
-    addr = controller.connect()
+    #addr = controller.connect()
     get_coods()
 
     #print("Connected at addr - {}".format(addr))

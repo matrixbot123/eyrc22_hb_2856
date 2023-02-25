@@ -21,7 +21,7 @@ errx, erry, errt = (0, 0 ,0)
 goalx, goaly, goalt = (0, 0, 0)
 nextgoals = []#stack of next goals
 conn=None
-aerrorx, aerrory, aerrort = 3, 3, 0.03#accepted error
+aerrorx, aerrory, aerrort = 3, 3, 0.055#accepted error
 check = 0
 #-------------------
 #helper functions
