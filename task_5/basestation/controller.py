@@ -3,12 +3,12 @@ import threading, datetime
 import feedback
 import socket
 from time import sleep
-from math import pi
+from math import pi, e, pow
 
 #constants
 VCONSTX = 100
 VCONSTY = -100
-VCONSTZ = -100
+VCONSTZ = -50
 
 #--non constants
 STOP = False#emergency stop flag
@@ -21,7 +21,7 @@ errx, erry, errt = (0, 0 ,0)
 goalx, goaly, goalt = (0, 0, 0)
 nextgoals = []#stack of next goals
 conn=None
-aerrorx, aerrory, aerrort = 3, 3, 0.055#accepted error
+aerrorx, aerrory, aerrort = 3, 3, 0.015#accepted error
 check = 0
 #-------------------
 #helper functions
@@ -86,6 +86,10 @@ def pause(t, reason):#pauses robot for t s
     sleep(t)
     STOP=False
 
+def sigmoid(a):
+    a = a*180/pi
+    return VCONSTZ * 1.8/(1 + 17 * pow(e, -a))
+
 def goto():
     global goalx, goaly, goalt, errx, erry, currvel, STOP, STOPREASON, check
     sleep(2)
@@ -114,9 +118,9 @@ def goto():
                 thetatmp = theta+pi
                 goalttmp = goalt+pi
                 if abs(goalttmp - thetatmp)<pi:
-                    velz = sign(VCONSTZ, goalttmp-thetatmp)
+                    velz = sign(sigmoid(abs(errt)), goalttmp-thetatmp)
                 else:
-                    velz = -sign(VCONSTZ, goalttmp-thetatmp)
+                    velz = -sign(sigmoid(abs(errt)), goalttmp-thetatmp)
                 currvel = (0, 0, velz)
                 broadcastvel(conn)
         else:

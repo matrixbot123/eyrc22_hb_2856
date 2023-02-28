@@ -122,12 +122,13 @@ def callback(current_frame):
 def setcamera():
     global cap
     print(sys.argv)
-    if len(sys.argv) >= 1:
+    if len(sys.argv) <= 1:
         cap = cv2.VideoCapture("/dev/video1")
     else:
+        print(908)
         cap = cv2.VideoCapture(int(sys.argv[1]))
 
-    codec = 0x47504A4D  # MJPG
+    codec = 0x47504A4D  # MPG
     cap.set(cv2.CAP_PROP_FOURCC, codec)
     cap.set(cv2.CAP_PROP_FPS, 60.0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
@@ -161,7 +162,8 @@ def get_coods():
             callback(frame)
 
             if not controller.aregoalsset():
-                setgoals([(250, 250, 0), (350,300, pi/4), (150,300, 3*pi/4), (150, 150, - 3 * pi / 4), (350,150, -pi/4)])
+                #setgoals([(250, 250, 0), (250, 250, pi/2), (250, 250, pi)])
+                setgoals([(250, 250, 0), (350, 300, pi/4), (150, 300, 3*pi/4), (150, 150, -3*pi/4), (350, 150, -pi/4)])
             controller.geterr(cx, cy, theta)
             #print(controller.currx, controller.curry)
             #print("ERROR", controller.errx, controller.erry)
@@ -180,7 +182,7 @@ def get_coods():
 
 if __name__ == "__main__":
     setcamera()
-    #addr = controller.connect()
+    addr = controller.connect()
     get_coods()
 
     #print("Connected at addr - {}".format(addr))
