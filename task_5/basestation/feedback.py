@@ -75,6 +75,22 @@ def get_theta(corn_pts):
         ret = -(2*math.pi - ret)
     theta = ret
 
+def image_mode():
+    # @param:   None
+    # @return:  Contour coordinates as numpy array
+    
+    # read the snapchat logo image 
+    img = cv2.imread("../taskImages/snapchat.png")
+    # resizing the image to 500, 500
+    img_resized = cv2.resize(img, (500, 500))
+    # # getting the edges of the shape
+    edges = cv2.Canny(img_resized, 30, 200)
+    # getting the contour coordinates
+    contours = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
+    # filtering the fourth coordinate only
+    final_contours = [c for c in contours if contours.index(c) % 4 == 0]
+
+    return final_contours
 
 def callback(current_frame):
     global cw, ch
@@ -163,7 +179,8 @@ def get_coods():
 
             if not controller.aregoalsset():
                 #setgoals([(250, 250, 0), (250, 250, pi/2), (250, 250, pi)])
-                setgoals([(250, 250, 0), (350, 300, pi/4), (150, 300, 3*pi/4), (150, 150, -3*pi/4), (350, 150, -pi/4)])
+                # setgoals([(250, 250, 0), (350, 300, pi/4), (150, 300, 3*pi/4), (150, 150, -3*pi/4), (350, 150, -pi/4)])
+                setgoals(image_mode())
             controller.geterr(cx, cy, theta)
             #print(controller.currx, controller.curry)
             #print("ERROR", controller.errx, controller.erry)

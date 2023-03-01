@@ -5,7 +5,7 @@ import socket
 from time import sleep
 from math import pi, e, pow
 import os
-
+import cv2
 
 #constants
 VCONSTX = 100
@@ -45,6 +45,9 @@ def norm(a, b):
     if m == 0:
         return
     return (a/m, b/m)
+
+
+
 
 def setgoals(goals):
     global nextgoals, goalx, goaly, goalt
