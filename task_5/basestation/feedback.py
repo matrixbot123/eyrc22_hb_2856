@@ -81,16 +81,25 @@ def image_mode():
     
     # read the snapchat logo image 
     img = cv2.imread("../taskImages/snapchat.png")
+    img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # resizing the image to 500, 500
-    img_resized = cv2.resize(img, (500, 500))
-    # # getting the edges of the shape
+    img_resized = cv2.resize(img_grey, (500, 500))
+    # testing if properly resized
+    print(img_resized.shape)
+    
+    assert img_resized.shape == (500, 500)
+    # getting the edges of the shape
     edges = cv2.Canny(img_resized, 30, 200)
     # getting the contour coordinates
-    contours = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
-    # filtering the fourth coordinate only
-    final_contours = [c for c in contours if contours.index(c) % 4 == 0]
-
-    return final_contours
+    contours = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0][0]
+    contours = list(contours)
+    # print(contours)
+    a = [(list(x)[0][0], list(x)[0][1]) for x in contours]
+    final = [s for s in a if a.index(s) % 4 == 0]
+    # print(type(a[0]))
+    # print(final)
+    # print(a)
+    return final
 
 def callback(current_frame):
     global cw, ch
@@ -139,7 +148,7 @@ def setcamera():
     global cap
     print(sys.argv)
     if len(sys.argv) <= 1:
-        cap = cv2.VideoCapture("/dev/video1")
+        cap = cv2.VideoCapture("/dev/video2")
     else:
         print(908)
         cap = cv2.VideoCapture(int(sys.argv[1]))
@@ -153,9 +162,9 @@ def setcamera():
 def setgoals(a):
     ngoals = []
     for i in a:
-        a = int(i[0]/500.0 * cw)
+        q = int(i[0]/500.0 * cw)
         b = int(i[1]/500.0 * ch)
-        ngoals.append((a, b, i[2]))
+        ngoals.append((q, b, 0))
     print(ngoals)
     controller.setgoals(ngoals)
 
@@ -179,8 +188,8 @@ def get_coods():
 
             if not controller.aregoalsset():
                 #setgoals([(250, 250, 0), (250, 250, pi/2), (250, 250, pi)])
-                # setgoals([(250, 250, 0), (350, 300, pi/4), (150, 300, 3*pi/4), (150, 150, -3*pi/4), (350, 150, -pi/4)])
-                setgoals(image_mode())
+                setgoals([(250, 250, 0), (350, 300, pi/4), (150, 300, 3*pi/4), (150, 150, -3*pi/4), (350, 150, -pi/4)])
+                # setgoals(image_mode())
             controller.geterr(cx, cy, theta)
             #print(controller.currx, controller.curry)
             #print("ERROR", controller.errx, controller.erry)

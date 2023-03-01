@@ -51,7 +51,7 @@ def norm(a, b):
 
 def setgoals(goals):
     global nextgoals, goalx, goaly, goalt
-    goalx, goaly, goalt = goals.pop(0)
+    goalx, goaly, goalt= goals.pop(0)
     print("Going to Origin Pose.")
     nextgoals = goals
 
