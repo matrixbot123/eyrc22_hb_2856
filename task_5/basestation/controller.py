@@ -4,6 +4,8 @@ import feedback
 import socket
 from time import sleep
 from math import pi, e, pow
+import os
+
 
 #constants
 VCONSTX = 100
@@ -25,6 +27,10 @@ aerrorx, aerrory, aerrort = 3, 3, 0.015#accepted error
 check = 0
 #-------------------
 #helper functions
+
+
+def get_ip():
+    return os.popen("hostname -I").read().split(" ")[0]
 
 def sign(a, x):
     if x >= 0:
@@ -146,10 +152,10 @@ def goto():
 def connect():
     global conn
     
-    ip = "192.168.29.247"     #Enter IP address of laptop after connecting it to WIFI hotspot
+    ip = get_ip()    #Enter IP address of laptop after connecting it to WIFI hotspot
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind((ip, 8005))
+    s.bind((ip, 8002))
     s.listen()
     conn, addr = s.accept()
     return addr

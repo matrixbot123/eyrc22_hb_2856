@@ -4,7 +4,8 @@
 const char* ssid = "Elite Group";                    //Enter your wifi hotspot ssid
 const char* password =  "Spyvrat7";               //Enter your wifi hotspot password
 const uint16_t port = 8002;
-const char * host = "192.168.29.247";                   //Enter the ip address of your laptop after connecting it to wifi hotspot
+const char *host1 = "192.168.29.247";                   //Enter the ip address of your laptop after connecting it to wifi hotspot
+const char *host2 = "192.168.29.162";
 volatile bool ismoving = false;
 
 hw_timer_t *My_timer = NULL;
@@ -30,7 +31,7 @@ void setup(){
  
   Serial.print("WiFi connected with IP: ");
   Serial.println(WiFi.localIP());
-
+  client.setTimeout(1);
   //My_timer = timerBegin(0, 80, true);
   //timerAttachInterrupt(My_timer, &onTimer, true);
   //timerAlarmWrite(My_timer, 10000, true);
@@ -39,13 +40,17 @@ void setup(){
 
 void loop() {
 
-  if (!client.connect(host, port)) {
-    Serial.println("Connection to host failed");
+  if(!client.connect(host1, port) && !client.connect(host2, port)) {
+    Serial.println("Connection to host1 and host2 failed");
     delay(200);
     return;
   }
+  Serial.println("Connected!");
   
   while(1){
+      if (!client.connected()){
+        return;
+      }
       msg = client.readStringUntil('\n');         //Read the message through the socket until new line char(\n)
       if (msg.length() == 0) {
         continue;
