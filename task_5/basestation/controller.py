@@ -8,8 +8,8 @@ import os
 import cv2
 
 #constants
-VCONSTX = 100
-VCONSTY = -100
+VCONSTX = 200
+VCONSTY = -200
 VCONSTZ = -50
 
 #--non constants
@@ -23,7 +23,7 @@ errx, erry, errt = (0, 0 ,0)
 goalx, goaly, goalt = (0, 0, 0)
 nextgoals = []#stack of next goals
 conn=None
-aerrorx, aerrory, aerrort = 3, 3, 0.015#accepted error
+aerrorx, aerrory, aerrort = 3, 3, 10.015#accepted error
 check = 0
 #-------------------
 #helper functions
@@ -120,7 +120,7 @@ def goto():
                 else:
                     (goalx, goaly, goalt) = nextgoals.pop(0)
                 print("GOAL REACHED")
-                pause(3, "One goal done")
+                pause(0.01, "One goal done")
                 continue
             else:
                 velz = 0

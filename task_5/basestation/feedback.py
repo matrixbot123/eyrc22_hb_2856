@@ -57,7 +57,7 @@ def get_centroid(corn_pts):
     cent_y = ((M["m01"] / M["m00"]))
     ocx, ocy = (int(cent_x), int(cent_y))
     (cx, cy) = (int(cent_x), ch-int(cent_y))#flipping y axis
-    (fakex, fakey) = (cx/cw * 500, 500 - cy/ch * 500)
+    (fakex, fakey) = (cx/cw * 500, cy/ch * 500)
 
 def get_theta(corn_pts):
     global ocx, ocy, theta
@@ -94,7 +94,7 @@ def image_mode():
     contours = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0][0]
     contours = list(contours)
     # print(contours)
-    a = [(list(x)[0][0], list(x)[0][1]) for x in contours]
+    a = [(list(x)[0][0]+30, list(x)[0][1]+30) for x in contours]
     final = [s for s in a if a.index(s) % 4 == 0]
     # print(type(a[0]))
     print(final)
@@ -162,10 +162,12 @@ def setcamera():
 def setgoals(a):
     ngoals = []
     for i in a:
-        a = int(i[0]/500.0 * cw)
+        q = int(i[0]/500.0 * cw)
         b = int(i[1]/500.0 * ch)
-        ngoals.append((a, b, 0))
+        ngoals.append((q, b, 0))
+    print("printing goals in setgoals(feedback)")
     print(ngoals)
+    print("hello")
     controller.setgoals(ngoals)
 
 def get_coods():
@@ -187,8 +189,9 @@ def get_coods():
             callback(frame)
 
             if not controller.aregoalsset():
-                #setgoals([(250, 250, 0), (250, 250, pi/2), (250, 250, pi)])
-                #setgoals([(250, 250, 0), (350, 300, pi/4), (150, 300, 3*pi/4), (150, 150, -3*pi/4), (350, 150, -pi/4)])
+                # setgoals([(250, 250, 0), (400, 400, pi/2), (300, 300, pi)])
+                # print("here check 1")
+                # setgoals([(250, 250, 0), (235, 24, 0), (220, 26, 0), (212, 28, 0), (205, 30, 0), (199, 32, 0), (194, 34, 0), (189, 36, 0)])
                 setgoals(image_mode())
             controller.geterr(cx, cy, theta)
             #print(controller.currx, controller.curry)
