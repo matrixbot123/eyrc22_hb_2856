@@ -16,5 +16,7 @@ def image_mode():
     edges = cv2.Canny(img_resized, 30, 200)
     # getting the contour coordinates
     contours = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
+    # filtering the fourth coordinate only
+    final_contours = [c for c in contours if contours.index(c) % 4 == 0]
 
-    return contours[0]
+    return final_contours
