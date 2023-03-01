@@ -97,7 +97,7 @@ def image_mode():
     a = [(list(x)[0][0], list(x)[0][1]) for x in contours]
     final = [s for s in a if a.index(s) % 4 == 0]
     # print(type(a[0]))
-    # print(final)
+    print(final)
     # print(a)
     return final
 
@@ -162,9 +162,9 @@ def setcamera():
 def setgoals(a):
     ngoals = []
     for i in a:
-        q = int(i[0]/500.0 * cw)
+        a = int(i[0]/500.0 * cw)
         b = int(i[1]/500.0 * ch)
-        ngoals.append((q, b, 0))
+        ngoals.append((a, b, 0))
     print(ngoals)
     controller.setgoals(ngoals)
 
@@ -188,8 +188,8 @@ def get_coods():
 
             if not controller.aregoalsset():
                 #setgoals([(250, 250, 0), (250, 250, pi/2), (250, 250, pi)])
-                setgoals([(250, 250, 0), (350, 300, pi/4), (150, 300, 3*pi/4), (150, 150, -3*pi/4), (350, 150, -pi/4)])
-                # setgoals(image_mode())
+                #setgoals([(250, 250, 0), (350, 300, pi/4), (150, 300, 3*pi/4), (150, 150, -3*pi/4), (350, 150, -pi/4)])
+                setgoals(image_mode())
             controller.geterr(cx, cy, theta)
             #print(controller.currx, controller.curry)
             #print("ERROR", controller.errx, controller.erry)
