@@ -25,15 +25,15 @@ dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_250)
 parameters = aruco.DetectorParameters()
 detector = aruco.ArucoDetector(dictionary, parameters)
 
-(ocx, ocy) = (0, 0)#coods according to opencv
+(ocx, ocy) = (0, 0) #coods according to opencv
 (fakex,fakey) = (0, 0)
-(cx, cy, theta) =  (-1, -1, 0)#coords according to problem
+(cx, cy, theta) =  (-1, -1, 0) #coords according to problem
 cap = None
 cw, ch = 1, 1
 
-scoods = [0, 0, 0, 0]#stabilized coordinates
-stol = 5#px stabillization tolerance
-sTol = 200#High tolerance point
+scoods = [0, 0, 0, 0]  #stabilized coordinates
+stol = 5 #px stabillization tolerance
+sTol = 200 #High tolerance point
 
 def stabilizebounds(r):
     global scoods
@@ -122,8 +122,8 @@ def callback(current_frame):
 def setcamera():
     global cap
     print(sys.argv)
-    if len(sys.argv) >= 1:
-        cap = cv2.VideoCapture("/dev/video1")
+    if len(sys.argv) <= 1:
+        cap = cv2.VideoCapture("/dev/video2")
     else:
         cap = cv2.VideoCapture(int(sys.argv[1]))
 
@@ -180,7 +180,7 @@ def get_coods():
 
 if __name__ == "__main__":
     setcamera()
-    #addr = controller.connect()
+    addr = controller.connect()
     get_coods()
 
     #print("Connected at addr - {}".format(addr))

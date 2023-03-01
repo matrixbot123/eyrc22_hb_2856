@@ -4,7 +4,7 @@
 const char* ssid = "Elite Group";                    //Enter your wifi hotspot ssid
 const char* password =  "Spyvrat7";               //Enter your wifi hotspot password
 const uint16_t port = 8002;
-const char * host = "192.168.29.247";                   //Enter the ip address of your laptop after connecting it to wifi hotspot
+const char * host = "192.168.29.162";                   //Enter the ip address of your laptop after connecting it to wifi hotspot
 volatile bool ismoving = false;
 
 hw_timer_t *My_timer = NULL;

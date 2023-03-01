@@ -142,10 +142,10 @@ def goto():
 def connect():
     global conn
     
-    ip = "192.168.29.247"     #Enter IP address of laptop after connecting it to WIFI hotspot
+    ip = "192.168.29.162"     #Enter IP address of laptop after connecting it to WIFI hotspot
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.bind((ip, 8005))
+    s.bind((ip, 8002))
     s.listen()
     conn, addr = s.accept()
     return addr

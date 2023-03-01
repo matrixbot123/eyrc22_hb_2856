@@ -12,7 +12,7 @@ def cleanup():
     s.close()
     print("cleanup done")
 
-ip = "192.168.29.247"     #Enter IP address of laptop after connecting it to WIFI hotspot
+ip = "192.168.29.162"     #Enter IP address of laptop after connecting it to WIFI hotspot
 
 
 #We will be sending a simple counter which counts from 1 to 10 and then closes the socket
