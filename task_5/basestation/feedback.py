@@ -83,11 +83,10 @@ def image_mode():
     img = cv2.imread("../taskImages/snapchat.png")
     img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # resizing the image to 500, 500
-    img_resized = cv2.resize(img_grey, (500, 500))
+    img_resized = cv2.resize(img_grey, (450, 450))
     # testing if properly resized
     print(img_resized.shape)
     
-    assert img_resized.shape == (500, 500)
     # getting the edges of the shape
     edges = cv2.Canny(img_resized, 30, 200)
     # getting the contour coordinates
