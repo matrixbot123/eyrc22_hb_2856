@@ -1,0 +1,8 @@
+prefix=/home/okabe/task5_ws/devel
+
+Name: cv_basics
+Description: Description of cv_basics
+Version: 0.0.0
+Cflags: -I/home/okabe/task5_ws/devel/include
+Libs: -L${prefix}/lib 
+Requires: cv_bridge image_transport roscpp rospy sensor_msgs std_msgs message_runtime

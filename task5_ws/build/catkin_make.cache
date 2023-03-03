@@ -1,0 +1,2 @@
+cv_basics:task5b
+-DCATKIN_DEVEL_PREFIX=/home/okabe/task5_ws/devel -DCMAKE_INSTALL_PREFIX=/home/okabe/task5_ws/install -G Unix Makefiles
