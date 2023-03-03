@@ -9,6 +9,7 @@ import threading
 import traceback
 import controller
 from time import sleep
+import function
 
 ARENABORDERIDS = [2, 4, 8, 10]
 ROBOT = 15
@@ -163,7 +164,7 @@ def setgoals(a):
     for i in a:
         q = int(i[0]/500.0 * cw)
         b = int(i[1]/500.0 * ch)
-        ngoals.append((q, b, 0))
+        ngoals.append((q, b, i[2]))
     print("printing goals in setgoals(feedback)")
     print(ngoals)
     print("hello")
@@ -191,7 +192,8 @@ def get_coods():
                 # setgoals([(250, 250, 0), (400, 400, pi/2), (300, 300, pi)])
                 # print("here check 1")
                 # setgoals([(250, 250, 0), (235, 24, 0), (220, 26, 0), (212, 28, 0), (205, 30, 0), (199, 32, 0), (194, 34, 0), (189, 36, 0)])
-                setgoals(image_mode())
+                # setgoals(image_mode())
+                setgoals(function.getgoals())
             controller.geterr(cx, cy, theta)
             #print(controller.currx, controller.curry)
             #print("ERROR", controller.errx, controller.erry)
