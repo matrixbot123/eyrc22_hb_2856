@@ -43,7 +43,7 @@ def sign(a, x):
 def norm(a, b):
     m = max(abs(a), abs(b))
     if m == 0:
-        return
+        return (0, 0)
     return (a/m, b/m)
 
 
@@ -106,32 +106,20 @@ def goto():
     while True:
         ex, ey, et = 0, 0, 0
         velx, vely, velz = (0, 0, 0)
-        if abs(errx)<aerrorx and abs(erry)<aerrory:#if reached linear goal
+        if abs(errx)<aerrorx and abs(erry)<aerrory and abs(errt)<aerrort:#if reached linear goal
             #print("Stopped linearly")
             #pause(1, "Stopped Linearly")
-            if abs(errt)<aerrort:
-#                print(theta, errt)
-                if len(nextgoals)==0:
-                    STOP = True
-                    STOPREASON = "DONE"
-                    broadcastvel(conn)
-                    print("Done.")
-                    exit()
-                else:
-                    (goalx, goaly, goalt) = nextgoals.pop(0)
-                print("GOAL REACHED")
-                pause(0.001, "One goal done")
-                continue
-            else:
-                velz = 0
-                thetatmp = theta+pi
-                goalttmp = goalt+pi
-                if abs(goalttmp - thetatmp)<pi:
-                    velz = sign(sigmoid(abs(errt)), goalttmp-thetatmp)
-                else:
-                    velz = -sign(sigmoid(abs(errt)), goalttmp-thetatmp)
-                currvel = (0, 0, velz)
+            if len(nextgoals)==0:
+                STOP = True
+                STOPREASON = "DONE"
                 broadcastvel(conn)
+                print("Done.")
+                exit()
+            else:
+                (goalx, goaly, goalt) = nextgoals.pop(0)
+            print("GOAL REACHED")
+            pause(0, "One goal done")
+            continue
         else:
             if errx==0:
                     ex = 0
@@ -147,8 +135,14 @@ def goto():
             #print("ERR ____", errx, erry, theta)
             #print("VELOCITY ___ ", velx, vely)
             #print("Publishing vel {}, {}".format(velx, vely))
-
-            currvel = (velx, vely, 0)
+            velz = 0
+            thetatmp = theta+pi
+            goalttmp = goalt+pi
+            if abs(goalttmp - thetatmp)<pi:
+                velz = sign(sigmoid(abs(errt)), goalttmp-thetatmp)
+            else:
+                velz = -sign(sigmoid(abs(errt)), goalttmp-thetatmp)
+            currvel = (velx, vely, velz)
             #print("currvel", currvel)
         broadcastvel(conn)
 
